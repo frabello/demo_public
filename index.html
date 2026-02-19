@@ -1,0 +1,3090 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iTracker – Escopo de Serviços: Controle de CAPEX e OPEX</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1A1A2E;
+    --primary-light: #2a2a45;
+    --accent: #E8622A;
+    --accent-hover: #cf5222;
+    --bg: #F5F5F7;
+    --surface: #FFFFFF;
+    --surface2: #F8F8FA;
+    --border: #E5E5EA;
+    --text: #1A1A2E;
+    --text-muted: #64748B;
+    --text-light: #94A3B8;
+    --success: #059669;
+    --success-bg: #ECFDF5;
+    --warning: #D97706;
+    --warning-bg: #FFFBEB;
+    --danger: #DC2626;
+    --danger-bg: #FEF2F2;
+    --purple: #7C3AED;
+    --purple-bg: #F5F3FF;
+    --orange: #E8622A;
+    --orange-bg: #FFF3EE;
+    --sidebar-w: 240px;
+    --header-h: 60px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+
+  /* ─── LOGIN ─── */
+  #login-screen {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f0f1a 0%, #1A1A2E 60%, #2a1a0f 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #login-screen::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    border: 1px solid rgba(232,98,42,0.15);
+    top: -200px; right: -200px;
+  }
+  #login-screen::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    border: 1px solid rgba(232,98,42,0.1);
+    bottom: -150px; left: -100px;
+  }
+
+  .login-dots {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .login-card {
+    background: rgba(255,255,255,0.97);
+    border-radius: 16px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+  }
+
+  .login-logo {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .login-logo .logo-icon {
+    width: 56px; height: 56px;
+    background: var(--primary);
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  .login-logo .logo-icon svg { color: white; }
+
+  .login-logo h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: -0.5px;
+  }
+
+  .login-logo p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--surface);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(46,134,193,0.1); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(46,134,193,0.3); }
+
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--bg); }
+
+  .btn-success { background: var(--success); color: white; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-outline { background: transparent; border: 1.5px solid var(--accent); color: var(--accent); }
+
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+  .btn-full { width: 100%; }
+
+  .login-error {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .login-hint {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-light);
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ─── APP SHELL ─── */
+  #app-shell { display: none; }
+
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: var(--sidebar-w);
+    height: 100vh;
+    background: var(--primary);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    overflow-y: auto;
+  }
+
+  .sidebar-logo {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sidebar-logo .logo-box {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .sidebar-logo span {
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.3px;
+  }
+
+  .sidebar-nav { padding: 12px 0; flex: 1; }
+
+  .nav-section {
+    padding: 8px 16px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-radius: 0;
+    color: rgba(255,255,255,0.65);
+    font-size: 13.5px;
+    font-weight: 500;
+    margin: 1px 8px;
+    border-radius: 6px;
+    position: relative;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+
+  .nav-item.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .nav-item svg { flex-shrink: 0; opacity: 0.8; }
+  .nav-item.active svg { opacity: 1; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: #EF4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .user-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .user-info-text { flex: 1; min-width: 0; }
+  .user-info-text .name { font-size: 13px; font-weight: 600; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-info-text .role { font-size: 11px; color: rgba(255,255,255,0.5); }
+
+  .logout-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255,255,255,0.4);
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.2s;
+  }
+  .logout-btn:hover { color: white; }
+
+  /* ─── HEADER ─── */
+  .header {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-w);
+    right: 0;
+    height: var(--header-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    z-index: 50;
+    gap: 16px;
+  }
+
+  .breadcrumb {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .breadcrumb span { color: var(--text); font-weight: 600; }
+
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    position: relative;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover { background: var(--bg); color: var(--text); }
+
+  .notif-dot {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 8px; height: 8px;
+    background: #EF4444;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+
+  /* ─── MAIN ─── */
+  .main-content {
+    margin-left: var(--sidebar-w);
+    margin-top: var(--header-h);
+    padding: 24px;
+    min-height: calc(100vh - var(--header-h));
+  }
+
+  /* ─── PAGE HEADER ─── */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+  }
+
+  .page-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .page-header p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* ─── CARDS ─── */
+  .card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* ─── KPI CARDS ─── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .kpi-card.blue::before { background: var(--accent); }
+  .kpi-card.green::before { background: var(--success); }
+  .kpi-card.orange::before { background: var(--warning); }
+  .kpi-card.purple::before { background: var(--purple); }
+
+  .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .kpi-value { font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+  .kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  .kpi-progress { margin-top: 10px; }
+  .progress-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+  .fill-blue { background: var(--accent); }
+  .fill-orange { background: var(--warning); }
+  .fill-green { background: var(--success); }
+  .fill-danger { background: var(--danger); }
+
+  /* ─── GRID LAYOUTS ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* ─── BADGES ─── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .badge-blue { background: #EFF6FF; color: #1D4ED8; }
+  .badge-green { background: var(--success-bg); color: var(--success); }
+  .badge-orange { background: var(--orange-bg); color: var(--orange); }
+  .badge-red { background: var(--danger-bg); color: var(--danger); }
+  .badge-purple { background: var(--purple-bg); color: var(--purple); }
+  .badge-dark-green { background: #ECFDF5; color: #065F46; }
+  .badge-gray { background: #F1F5F9; color: #475569; }
+  .badge-yellow { background: #FFFBEB; color: #92400E; }
+
+  /* ─── TABLE ─── */
+  .table-wrap { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  tbody td {
+    padding: 12px 14px;
+    font-size: 13.5px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+  }
+
+  tbody tr:hover { background: var(--bg); }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .action-icons { display: flex; gap: 6px; }
+
+  .action-btn {
+    width: 30px; height: 30px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .action-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* ─── FILTER BAR ─── */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-select {
+    padding: 8px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--surface);
+    cursor: pointer;
+    outline: none;
+  }
+  .filter-select:focus { border-color: var(--accent); }
+
+  .search-input {
+    padding: 8px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    min-width: 200px;
+  }
+  .search-input:focus { border-color: var(--accent); }
+
+  /* ─── FORM ELEMENTS ─── */
+  .form-row { display: grid; gap: 16px; margin-bottom: 16px; }
+  .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  textarea.form-control { resize: vertical; min-height: 80px; }
+
+  select.form-control { cursor: pointer; }
+
+  .form-hint { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+
+  /* ─── ATTACHMENT ─── */
+  .attachment-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background: var(--surface2);
+  }
+
+  .attachment-item.pending { border-color: #FED7AA; background: #FFF7ED; }
+  .attachment-item.done { border-color: #A7F3D0; background: #ECFDF5; }
+
+  .attach-icon { font-size: 18px; }
+  .attach-name { flex: 1; font-size: 13px; font-weight: 500; }
+  .attach-status { font-size: 12px; font-weight: 600; }
+  .status-done { color: var(--success); }
+  .status-pending { color: var(--orange); }
+
+  /* ─── TIMELINE ─── */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .timeline-dot {
+    position: absolute;
+    left: -21px;
+    top: 4px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+
+  .timeline-dot.green { background: var(--success); }
+  .timeline-dot.blue { background: var(--accent); }
+  .timeline-dot.red { background: var(--danger); }
+  .timeline-dot.gray { background: var(--text-light); }
+
+  .timeline-date { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+  .timeline-text { font-size: 13px; color: var(--text); }
+  .timeline-comment { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 2px; }
+
+  /* ─── ALERT BANNER ─── */
+  .alert-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .alert-warning { background: #FFFBEB; border: 1px solid #FDE68A; color: #92400E; }
+  .alert-info { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1E40AF; }
+  .alert-danger { background: var(--danger-bg); border: 1px solid #FECACA; color: #991B1B; }
+  .alert-success { background: var(--success-bg); border: 1px solid #A7F3D0; color: #065F46; }
+
+  /* ─── APPROVAL STEPS ─── */
+  .approval-steps { display: flex; align-items: center; gap: 0; margin: 20px 0; }
+
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+  }
+
+  .step::after {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+  }
+  .step:last-child::after { display: none; }
+  .step.done::after { background: var(--success); }
+
+  .step-circle {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+    border: 2px solid var(--border);
+    background: var(--surface);
+  }
+
+  .step.done .step-circle { background: var(--success); color: white; border-color: var(--success); }
+  .step.active .step-circle { background: var(--accent); color: white; border-color: var(--accent); animation: pulse 2s infinite; }
+  .step.pending .step-circle { background: var(--surface); color: var(--text-light); border-color: var(--border); }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(46,134,193,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(46,134,193,0); }
+  }
+
+  .step-label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-top: 8px; text-align: center; }
+  .step.done .step-label { color: var(--success); }
+  .step.active .step-label { color: var(--accent); }
+
+  /* ─── CHAT ─── */
+  .chat-layout { display: grid; grid-template-columns: 280px 1fr; gap: 0; height: calc(100vh - 160px); }
+
+  .chat-list {
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+  }
+
+  .chat-list-item {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .chat-list-item:hover { background: var(--bg); }
+  .chat-list-item.active { background: #EFF6FF; border-left: 3px solid var(--accent); }
+
+  .chat-item-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .chat-item-preview { font-size: 12px; color: var(--text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-item-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .chat-item-time { font-size: 11px; color: var(--text-light); }
+
+  .chat-window {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: var(--surface2);
+  }
+
+  .chat-msg { display: flex; gap: 10px; max-width: 70%; }
+  .chat-msg.mine { flex-direction: row-reverse; align-self: flex-end; }
+  .chat-msg.system-msg { align-self: center; max-width: 80%; }
+
+  .msg-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .msg-avatar.green { background: var(--success); }
+  .msg-avatar.purple { background: var(--purple); }
+
+  .msg-bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .chat-msg.mine .msg-bubble { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .msg-sender { font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
+  .chat-msg.mine .msg-sender { text-align: right; color: rgba(255,255,255,0.7); }
+
+  .system-bubble {
+    background: #F1F5F9;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .chat-input-area {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    gap: 10px;
+  }
+
+  .chat-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    resize: none;
+  }
+  .chat-input:focus { border-color: var(--accent); }
+
+  /* ─── METRIC MINI CARDS ─── */
+  .metric-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .metric-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .metric-value { font-size: 18px; font-weight: 700; color: var(--text); }
+  .metric-pct { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ─── BIMER FIELD ─── */
+  .bimer-section {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 16px;
+  }
+
+  .bimer-section h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+
+  /* ─── WEBDOX STATUS ─── */
+  .webdox-widget {
+    background: var(--purple-bg);
+    border: 1px solid #DDD6FE;
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 12px;
+  }
+
+  .webdox-widget h4 { font-size: 13px; font-weight: 700; color: var(--purple); margin-bottom: 10px; }
+
+  .signer-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+  .signer-check { color: var(--success); }
+  .signer-pending { color: var(--text-light); }
+
+  /* ─── COST CENTER BORDER ─── */
+  .bimer-pending-row td:first-child { border-left: 3px solid var(--orange); }
+
+  /* ─── SLIDE OVER ─── */
+  .slide-over-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 200;
+    display: none;
+  }
+
+  .slide-over {
+    position: fixed;
+    top: 0; right: 0;
+    width: 400px;
+    height: 100vh;
+    background: var(--surface);
+    z-index: 201;
+    box-shadow: -8px 0 32px rgba(0,0,0,0.15);
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.3s;
+  }
+
+  .slide-over.open { transform: translateX(0); }
+
+  .slide-over-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .slide-over-body { padding: 20px; }
+
+  .detail-field { margin-bottom: 14px; }
+  .detail-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .detail-value { font-size: 14px; color: var(--text); }
+
+  /* ─── STATUS CARD ─── */
+  .status-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-orange { background: var(--warning); }
+  .dot-green { background: var(--success); }
+  .dot-blue { background: var(--accent); }
+  .dot-red { background: var(--danger); }
+
+  /* ─── MONTHLY TABLE ─── */
+  .month-past td { color: var(--text-muted); background: #FAFAFA; }
+  .month-current td { background: #EFF6FF; font-weight: 600; }
+  .month-exceeded td { background: #FEF2F2; }
+  .month-exceeded td:last-child { color: var(--danger); }
+
+  /* ─── SECTION DIVIDER ─── */
+  .section-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  /* ─── UTILS ─── */
+  .text-muted { color: var(--text-muted); }
+  .text-sm { font-size: 13px; }
+  .text-xs { font-size: 11px; }
+  .text-success { color: var(--success); }
+  .text-danger { color: var(--danger); }
+  .text-warning { color: var(--warning); }
+  .fw-600 { font-weight: 600; }
+  .fw-700 { font-weight: 700; }
+  .mb-4 { margin-bottom: 4px; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mb-24 { margin-bottom: 24px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .flex { display: flex; }
+  .items-center { align-items: center; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .justify-between { justify-content: space-between; }
+  .ml-auto { margin-left: auto; }
+
+  /* ─── SCREEN VISIBILITY ─── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ─── CHART CANVAS ─── */
+  .chart-container { position: relative; }
+
+  /* ─── VOFF BLOCKED ─── */
+  .voff-blocked .form-control { opacity: 0.5; pointer-events: none; }
+
+  /* Responsive tweaks */
+  @media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .metric-cards { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-dots"></div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div style="margin-bottom:16px;">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100" style="height:60px;width:auto;">
+          <!-- iTracker Logo SVG recreation -->
+          <circle cx="38" cy="30" r="12" fill="#E8622A"/>
+          <circle cx="52" cy="18" r="7" fill="#2563EB"/>
+          <path d="M30 50 Q38 35 46 50" stroke="#E8622A" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <text x="70" y="42" font-family="Arial Black,sans-serif" font-weight="900" font-size="32" fill="#1A1A2E">i<tspan fill="#1A1A2E">Tracker</tspan></text>
+          <text x="70" y="62" font-family="Arial,sans-serif" font-size="11" fill="#94A3B8" letter-spacing="2">LOGÍSTICA INTELIGENTE</text>
+        </svg>
+      </div>
+      <h1 style="font-size:16px;color:var(--text-muted);font-weight:500;">Controle de CAPEX e OPEX</h1>
+    </div>
+
+    <div class="login-error" id="login-error">E-mail ou senha incorretos. Tente novamente.</div>
+
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" class="form-control" id="login-email" placeholder="seu@email.com.br" value="joao.vsilva@itracker.ictsi.com">
+    </div>
+
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" class="form-control" id="login-password" placeholder="••••••••" value="itracker">
+    </div>
+
+    <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()" style="margin-top:8px; padding:12px;">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10,17 15,12 10,7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      Entrar
+    </button>
+
+    <div class="login-hint">
+      Acesso: joao.vsilva&#64;itracker.ictsi.com / itracker
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     APP SHELL
+══════════════════════════════════════════════════════════ -->
+<div id="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-box">
+        <svg width="20" height="20" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <path d="M7 8h4M7 11h8"/>
+        </svg>
+      </div>
+      <div><span style="font-weight:900;color:white;">iTracker</span><div style="font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:1px;text-transform:uppercase;margin-top:1px;">Logística Inteligente</div></div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">Visão Geral</div>
+      <div class="nav-item active" onclick="showScreen('overview', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Apresentação do Projeto
+      </div>
+      <div class="nav-section">Principal</div>
+      <div class="nav-item" onclick="showScreen('dashboard', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Painel Geral
+      </div>
+
+      <div class="nav-section">CAPEX</div>
+      <div class="nav-item" onclick="showScreen('capex-form', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Nova Solicitação
+      </div>
+      <div class="nav-item" onclick="showScreen('capex-list', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Acompanhamento
+        <span class="nav-badge">7</span>
+      </div>
+      <div class="nav-item" onclick="showScreen('capex-cc', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        Centros de Custo
+      </div>
+
+      <div class="nav-section">OPEX</div>
+      <div class="nav-item" onclick="showScreen('opex', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Controle Mensal
+      </div>
+      <div class="nav-item" onclick="showScreen('budget', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Revisão de Budget
+      </div>
+      <div class="nav-item" onclick="showScreen('opex-cc', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        Centros de Custo
+      </div>
+
+      <div class="nav-section">Aditivos</div>
+      <div class="nav-item" onclick="showScreen('voff', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        VOFF – Aditivos
+      </div>
+      <div class="nav-item" onclick="showScreen('cotacao', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        Cotação do Dólar
+      </div>
+
+      <div class="nav-section">Comunicação</div>
+      <div class="nav-item" onclick="showScreen('chat', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat Interno
+        <span class="nav-badge">3</span>
+      </div>
+
+      <div class="nav-section">Configurações</div>
+      <div class="nav-item" onclick="showScreen('centros', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+        Centros de Custo
+      </div>
+      <div class="nav-item" onclick="showScreen('config', this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Configurações
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar">LH</div>
+        <div class="user-info-text">
+          <div class="name">Luiz H. Porciuncula Alves</div>
+          <div class="role">Diretor Geral</div>
+        </div>
+        <button class="logout-btn" onclick="doLogout()" title="Sair">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="breadcrumb" id="breadcrumb">Painel Geral</div>
+    <div class="header-actions">
+      <div class="icon-btn">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div class="icon-btn" style="position:relative">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-dot"></span>
+      </div>
+      <div style="width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;cursor:pointer;">LH</div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 0: OVERVIEW / APRESENTAÇÃO
+    ═══════════════════════════════════════ -->
+    <div class="screen active" id="screen-overview">
+      <div style="max-width:860px;margin:0 auto;">
+
+        <div style="text-align:center;margin-bottom:40px;padding:32px;background:linear-gradient(135deg,#1A1A2E,#2a1a0f);border-radius:16px;position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(232,98,42,0.08) 1px,transparent 1px);background-size:28px 28px;"></div>
+          <div style="position:relative;z-index:1;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" style="height:50px;width:auto;margin-bottom:16px;">
+              <text x="0" y="52" font-family="Arial Black,sans-serif" font-weight="900" font-size="48" fill="white">i<tspan fill="#E8622A">Tracker</tspan></text>
+            </svg>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:3px;text-transform:uppercase;margin-bottom:24px;">Logística Inteligente</div>
+            <h1 style="font-size:26px;font-weight:700;color:white;letter-spacing:-0.5px;margin-bottom:8px;">Escopo de Serviços</h1>
+            <h2 style="font-size:18px;font-weight:500;color:rgba(255,255,255,0.7);">Controle de CAPEX e OPEX – Solicitação e Gestão</h2>
+            </div>
+        </div>
+
+        <!-- Situação Atual -->
+        <div class="card mb-20">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <div style="width:36px;height:36px;background:#FEF2F2;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">⚠️</div>
+            <div class="card-title" style="font-size:16px;">Situação Atual do iTracker</div>
+          </div>
+          <p style="font-size:14px;line-height:1.7;color:var(--text-muted);">
+            O iTracker já possui fluxos de aprovação, porém <strong style="color:var(--text);">não há módulo estruturado para controle orçamentário de OPEX e CAPEX</strong>. 
+            O orçamento não é controlado por mês, não existem bloqueios automáticos ao estourar o limite, não há uso de cotação de dólar para VOFF, 
+            a criação de centros no Bimer não é sustentada por um fluxo guiado dentro do app e as interações entre área solicitante, financeiro e diretoria 
+            <strong style="color:var(--text);">ocorrem de forma dispersa, muitas vezes fora do sistema.</strong>
+          </p>
+        </div>
+
+        <!-- Objetivo -->
+        <div class="card mb-20" style="border-left:4px solid var(--accent);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <div style="width:36px;height:36px;background:#FFF3EE;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">🎯</div>
+            <div class="card-title" style="font-size:16px;">Nosso Objetivo</div>
+          </div>
+          <p style="font-size:14px;line-height:1.7;color:var(--text-muted);">
+            Criar um <strong style="color:var(--text);">sistema robusto de controle orçamentário</strong> para OPEX e CAPEX dentro do portal iTracker, 
+            permitindo que cada centro de custo tenha valores anuais e mensais aprovados, com saldos comprometidos, em trânsito e consumidos, 
+            <strong style="color:var(--text);">bloqueio automático</strong> de novas solicitações ao atingir o limite, fluxos de revisão de budget, 
+            CAPEX e solicitação de <strong style="color:var(--text);">VOFF para solicitar verba no exterior</strong> com uso de cotação mensal de dólar, 
+            geração de documentos em inglês, assinatura digital via WebDox, chat interno entre solicitantes e aprovadores e processo guiado 
+            para o Financeiro criar e ativar centros de custo no Bimer de forma segura e rastreável.
+          </p>
+        </div>
+
+        <!-- Escopo - 14 itens -->
+        <div class="card mb-20">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+            <div style="width:36px;height:36px;background:#EFF6FF;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">📋</div>
+            <div class="card-title" style="font-size:16px;">O que será desenvolvido</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">1</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Reaproveitar tabela de centros de custo no SharePoint com campos ampliados para saldos e validade.</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">2</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Criar tabelas para OPEX, CAPEX, VOFF, orçamento mensal, cotações de dólar e chat interno.</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">3</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Controle anual e mensal de OPEX com saldos comprometidos, em trânsito, consumidos e disponíveis.</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">4</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Bloqueio automático de solicitações quando o orçamento não comportar nova despesa, integrado com compras, medições, PA e reembolso.</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">5</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Fluxo de revisão de budget para OPEX com justificativa, aprovação em múltiplos níveis e histórico.</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">6</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Tela de solicitação de CAPEX em português com anexos obrigatórios e geração automática de documento em inglês via WebDox.</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">7</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Fluxo de aprovação de CAPEX com devoluções, reenvios, linha do tempo e registro de quem aprovou.</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">8</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Notificação ao Financeiro com dados para criar centro no Bimer manualmente (sem API disponível).</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">9</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">O Financeiro registra o código Bimer na própria tela do CAPEX, ativando o centro de custo no app.</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">10</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Módulo VOFF para solicitar verba na Filipinas: valor em real convertido para dólar com cotação mensal, com tela própria de solicitação.</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">11</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Lista de cotação mensal do dólar com automação para notificar o responsável quando ausente.</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">12</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Bloqueio de VOFF sem cotação do mês, orientando o usuário e notificando o responsável.</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">13</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Chat interno por solicitação entre solicitante e aprovadores, com histórico rastreável.</div>
+            </div>
+            <div style="display:flex;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+              <div style="width:28px;height:28px;background:var(--accent);color:white;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;">14</div>
+              <div style="font-size:13px;line-height:1.5;color:var(--text);">Dashboards com visão anual e mensal, alertas de 80%, estouro de orçamento e centros sem parametrização.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align:center;padding:24px;">
+          <p style="font-size:14px;color:var(--text-muted);margin-bottom:16px;">Explore as telas do sistema navegando pelo menu lateral</p>
+          <button class="btn btn-primary" style="padding:12px 32px;font-size:15px;" onclick="showScreen('dashboard', document.querySelectorAll('.nav-item')[1])">
+            Ver Painel Geral →
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 1: DASHBOARD
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-dashboard">
+      <div class="page-header">
+        <div>
+          <h2>Painel Geral</h2>
+          <p>Visão consolidada · iTracker Logística Inteligente · Exercício 2025</p>
+        </div>
+        <div class="flex gap-8">
+          <select class="filter-select"><option>2025</option><option>2024</option></select>
+          <button class="btn btn-primary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar
+          </button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card orange">
+          <div class="kpi-label">Orçamento Anual OPEX</div>
+          <div class="kpi-value">R$ 4.200.000</div>
+          <div class="kpi-sub">de R$ 5.000.000 aprovados</div>
+          <div class="kpi-progress">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <span style="font-size:11px;color:var(--warning);font-weight:700;">84% utilizado</span>
+              <span style="font-size:11px;color:var(--text-muted)">⚠ Alerta</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill fill-orange" style="width:84%"></div></div>
+          </div>
+        </div>
+
+        <div class="kpi-card blue">
+          <div class="kpi-label">CAPEX Aprovado 2025</div>
+          <div class="kpi-value">R$ 1.850.000</div>
+          <div class="kpi-sub">12 projetos aprovados</div>
+          <div class="kpi-progress">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <span style="font-size:11px;color:var(--accent);font-weight:700;">62% executado</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill fill-blue" style="width:62%"></div></div>
+          </div>
+        </div>
+
+        <div class="kpi-card green">
+          <div class="kpi-label">Solicitações em Aberto</div>
+          <div class="kpi-value">7</div>
+          <div class="kpi-sub">3 aguardando aprovação · 4 em análise</div>
+        </div>
+
+        <div class="kpi-card purple">
+          <div class="kpi-label">Centros de Custo Ativos</div>
+          <div class="kpi-value">23</div>
+          <div class="kpi-sub">2 pendentes ativação Bimer</div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:20px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Consumo OPEX Mensal – 2025</div>
+            <span class="badge badge-gray">Jan–Set</span>
+          </div>
+          <div class="chart-container" style="height:200px;">
+            <canvas id="chart-opex"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Status de CAPEX</div>
+            <span class="badge badge-gray">2025</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:20px;">
+            <div class="chart-container" style="height:180px;width:180px;flex-shrink:0;">
+              <canvas id="chart-capex"></canvas>
+            </div>
+            <div style="flex:1;">
+              <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:10px;height:10px;border-radius:50%;background:#059669;display:inline-block;"></span> Aprovado – 5 projetos</div>
+              <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:10px;height:10px;border-radius:50%;background:#2E86C1;display:inline-block;"></span> Em Aprovação – 3</div>
+              <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:10px;height:10px;border-radius:50%;background:#EA580C;display:inline-block;"></span> Aguard. Financeiro – 2</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="width:10px;height:10px;border-radius:50%;background:#DC2626;display:inline-block;"></span> Reprovado – 2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚠ Alertas de Orçamento</div>
+          <span class="badge badge-yellow">3 centros em alerta</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Centro de Custo</th>
+                <th>Responsável</th>
+                <th>Orçamento Mensal</th>
+                <th>Consumido</th>
+                <th>% Utilizado</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="fw-600">CC-2025-003 – TI & Sistemas Portuários</td>
+                <td>André Figueiredo</td>
+                <td>R$ 85.000</td>
+                <td>R$ 78.200</td>
+                <td><span style="color:var(--warning);font-weight:700;">92%</span></td>
+                <td><span class="badge badge-yellow">⚠ Alerta 80%</span></td>
+              </tr>
+              <tr>
+                <td class="fw-600">CC-2025-007 – Terminal Sul – Ops</td>
+                <td>Cristiane Neves</td>
+                <td>R$ 120.000</td>
+                <td>R$ 124.300</td>
+                <td><span style="color:var(--danger);font-weight:700;">104%</span></td>
+                <td><span class="badge badge-red">🔴 Estourado</span></td>
+              </tr>
+              <tr>
+                <td class="fw-600">CC-2025-011 – Comercial – SP</td>
+                <td>Eduardo Costa</td>
+                <td>R$ 95.000</td>
+                <td>R$ 81.700</td>
+                <td><span style="color:var(--warning);font-weight:700;">86%</span></td>
+                <td><span class="badge badge-yellow">⚠ Alerta 80%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 2: CAPEX FORM
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-capex-form">
+      <div class="page-header">
+        <div>
+          <h2>Nova Solicitação de CAPEX</h2>
+          <p>Preencha todos os campos e anexe os documentos obrigatórios</p>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-secondary">Salvar Rascunho</button>
+        </div>
+      </div>
+
+      <div class="grid-2" style="gap:20px;align-items:start;">
+        <div>
+          <div class="card mb-20">
+            <div class="card-title mb-16">Dados do Projeto</div>
+
+            <div class="form-row cols-2">
+              <div class="form-group">
+                <label>Valor Solicitado (R$) *</label>
+                <input type="text" class="form-control" id="f-valor" value="R$ 320.000,00">
+              </div>
+              <div class="form-group">
+                <label>Categoria *</label>
+                <select class="form-control" id="f-categoria">
+                  <option>Equipment</option>
+                  <option>Civil</option>
+                  <option>IT</option>
+                  <option>Others</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group mb-16">
+              <label>Título do Projeto *</label>
+              <input type="text" class="form-control" id="f-titulo" value="Aquisição de Reach Stackers – Terminal Santos">
+            </div>
+
+            <div class="form-group mb-16">
+              <label>Descrição Detalhada *</label>
+              <textarea class="form-control" id="f-descricao" rows="3">Aquisição de 4 empilhadeiras elétricas e sistema de rack para otimização do fluxo operacional no galpão da unidade Leste, reduzindo em 30% o tempo de separação de pedidos.</textarea>
+            </div>
+
+            <div class="form-group mb-16">
+              <label>Justificativa Estratégica *</label>
+              <textarea class="form-control" id="f-justificativa" rows="3">Necessidade de expansão da capacidade operacional para suportar crescimento de 40% no volume de pedidos previsto para 2025, conforme planejamento estratégico aprovado em dezembro/2024.</textarea>
+            </div>
+
+
+
+            <div class="form-row cols-2">
+              <div class="form-group">
+                <label>Data de Início Prevista *</label>
+                <input type="date" class="form-control" id="f-inicio" value="2025-02-15">
+              </div>
+              <div class="form-group">
+                <label>Data de Conclusão Prevista *</label>
+                <input type="date" class="form-control" id="f-fim" value="2025-04-30">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card mb-20">
+            <div class="card-title mb-16">Documentos Obrigatórios</div>
+
+            <div class="alert-banner alert-warning mb-16">
+              <span>⚠</span>
+              <span>O botão de envio ficará habilitado somente após o upload de <strong>todos os 4 documentos</strong>.</span>
+            </div>
+
+            <div class="attachment-item done">
+              <span class="attach-icon">📄</span>
+              <div style="flex:1;">
+                <div class="attach-name">Mapa Comparativo.pdf</div>
+                <div style="font-size:11px;color:var(--text-muted);">245 KB · Enviado 14/01/2025</div>
+              </div>
+              <span class="attach-status status-done">✔ Enviado</span>
+            </div>
+
+            <div class="attachment-item done">
+              <span class="attach-icon">📄</span>
+              <div style="flex:1;">
+                <div class="attach-name">Proposta_Fornecedor_1.pdf</div>
+                <div style="font-size:11px;color:var(--text-muted);">1.2 MB · Enviado 14/01/2025</div>
+              </div>
+              <span class="attach-status status-done">✔ Enviado</span>
+            </div>
+
+            <div class="attachment-item done">
+              <span class="attach-icon">📄</span>
+              <div style="flex:1;">
+                <div class="attach-name">Proposta_Fornecedor_2.pdf</div>
+                <div style="font-size:11px;color:var(--text-muted);">987 KB · Enviado 14/01/2025</div>
+              </div>
+              <span class="attach-status status-done">✔ Enviado</span>
+            </div>
+
+            <div class="attachment-item pending">
+              <span class="attach-icon">📎</span>
+              <div style="flex:1;">
+                <div class="attach-name" style="color:var(--orange);">Proposta_Fornecedor_3.pdf</div>
+                <div style="font-size:11px;color:var(--orange);font-weight:600;">Documento pendente</div>
+              </div>
+              <button class="btn btn-outline" style="font-size:12px;padding:6px 12px;">Enviar</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title mb-12">Envio para Assinatura</div>
+            <p class="text-sm text-muted mb-16">Após upload de todos os documentos, o sistema gera automaticamente o documento em inglês e envia via WebDox para assinatura digital.</p>
+
+            <button class="btn btn-primary btn-full" onclick="openCRF()" style="padding:12px;">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+              Gerar CRF e Enviar para Assinatura (WebDox)
+            </button>
+            <p class="form-hint mt-8" style="text-align:center;">⚠ Aguardando: Proposta_Fornecedor_3.pdf</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 3: CAPEX LIST
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-capex-list">
+      <div class="page-header">
+        <div>
+          <h2>Acompanhamento de CAPEX</h2>
+          <p>7 solicitações em aberto · Exercício 2025</p>
+        </div>
+        <button class="btn btn-primary" onclick="showScreen('capex-form', document.querySelector('.nav-item:nth-child(5)'))">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Nova Solicitação
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="filter-bar">
+          <input class="search-input" placeholder="🔍  Buscar por projeto ou responsável...">
+          <select class="filter-select"><option>Todos os Status</option><option>Em Aprovação</option><option>Aprovado</option><option>Reprovado</option></select>
+          <select class="filter-select"><option>Todos os Centros</option><option>CC-2024-007</option><option>CC-2025-003</option></select>
+          <select class="filter-select"><option>2025</option><option>2024</option></select>
+          <button class="btn btn-secondary" style="margin-left:auto;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar
+          </button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Projeto</th>
+                <th>Centro de Custo</th>
+                <th>Valor (R$)</th>
+                <th>Status</th>
+                <th>Responsável</th>
+                <th>Data Solic.</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span style="font-family:'DM Mono';font-size:12px;color:var(--text-muted);">CAPEX-2025-001</span></td>
+                <td class="fw-600">Expansão Terminal Logístico – Fase 2</td>
+                <td>CC-2024-007</td>
+                <td class="fw-600">R$ 480.000</td>
+                <td><span class="badge badge-blue">Em Aprovação</span></td>
+                <td>Joana Carvalho</td>
+                <td>03/01/2025</td>
+                <td><div class="action-icons">
+                  <div class="action-btn" onclick="openDetail()" title="Ver detalhes">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </div>
+                  <div class="action-btn" title="Aprovar">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20,6 9,17 4,12"/></svg>
+                  </div>
+                  <div class="action-btn" title="Chat">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  </div>
+                </div></td>
+              </tr>
+              <tr>
+                <td><span style="font-family:'DM Mono';font-size:12px;color:var(--text-muted);">CAPEX-2025-002</span></td>
+                <td class="fw-600">Servidores Datacenter</td>
+                <td>CC-2025-003</td>
+                <td class="fw-600">R$ 215.000</td>
+                <td><span class="badge badge-green">✔ Aprovado</span></td>
+                <td>Rafael Martins</td>
+                <td>07/01/2025</td>
+                <td><div class="action-icons">
+                  <div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                  <div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                </div></td>
+              </tr>
+              <tr>
+                <td><span style="font-family:'DM Mono';font-size:12px;color:var(--text-muted);">CAPEX-2025-003</span></td>
+                <td class="fw-600">Reach Stackers – Santos</td>
+                <td>CC-2024-007</td>
+                <td class="fw-600">R$ 320.000</td>
+                <td><span class="badge badge-orange">⏳ Aguard. Financeiro</span></td>
+                <td>Joana Carvalho</td>
+                <td>14/01/2025</td>
+                <td><div class="action-icons">
+                  <div class="action-btn" onclick="openDetail()"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                  <div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                </div></td>
+              </tr>
+              <tr>
+                <td><span style="font-family:'DM Mono';font-size:12px;color:var(--text-muted);">CAPEX-2025-004</span></td>
+                <td class="fw-600">Modernização Pátio de Containers</td>
+                <td>CC-2025-009</td>
+                <td class="fw-600">R$ 98.000</td>
+                <td><span class="badge badge-red">✕ Reprovado</span></td>
+                <td>Luiz Henrique P. Alves</td>
+                <td>10/01/2025</td>
+                <td><div class="action-icons">
+                  <div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                </div></td>
+              </tr>
+              <tr>
+                <td><span style="font-family:'DM Mono';font-size:12px;color:var(--text-muted);">CAPEX-2025-005</span></td>
+                <td class="fw-600">Sistema TOS – Integração Porto</td>
+                <td>CC-2025-003</td>
+                <td class="fw-600">R$ 175.000</td>
+                <td><span class="badge badge-purple">✍ Assinatura Pendente</span></td>
+                <td>Rafael Martins</td>
+                <td>12/01/2025</td>
+                <td><div class="action-icons">
+                  <div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                  <div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                </div></td>
+              </tr>
+              <tr>
+                <td><span style="font-family:'DM Mono';font-size:12px;color:var(--text-muted);">CAPEX-2025-006</span></td>
+                <td class="fw-600">Frota de Reach Stackers Elétricos</td>
+                <td>CC-2024-012</td>
+                <td class="fw-600">R$ 562.000</td>
+                <td><span class="badge badge-dark-green">● Ativo – Bimer OK</span></td>
+                <td>Patricia Souza</td>
+                <td>05/01/2025</td>
+                <td><div class="action-icons">
+                  <div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+                  <div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                </div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DETAIL PANEL (inline, shown below table) -->
+      <div id="capex-detail" style="display:none;margin-top:20px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">CAPEX-2025-003 · Equipamentos de Movimentação</div>
+            <button class="btn btn-secondary" onclick="document.getElementById('capex-detail').style.display='none'" style="font-size:12px;padding:6px 12px;">Fechar</button>
+          </div>
+
+          <div class="grid-2" style="gap:24px;">
+            <!-- Left -->
+            <div>
+              <div class="form-row cols-2">
+                <div class="detail-field">
+                  <div class="detail-label">Centro de Custo</div>
+                  <div class="detail-value">CC-2024-007 – Terminal Santos – Ops</div>
+                </div>
+                <div class="detail-field">
+                  <div class="detail-label">Valor Solicitado</div>
+                  <div class="detail-value fw-700" style="color:var(--accent);">R$ 320.000,00</div>
+                </div>
+              </div>
+              <div class="detail-field mb-12">
+                <div class="detail-label">Título</div>
+                <div class="detail-value">Aquisição de Reach Stackers – Terminal Santos</div>
+              </div>
+              <div class="detail-field mb-12">
+                <div class="detail-label">Justificativa</div>
+                <div class="detail-value text-sm" style="color:var(--text-muted);">Necessidade de expansão da capacidade operacional para suportar crescimento de 40% no volume de pedidos...</div>
+              </div>
+
+              <div class="section-divider"></div>
+
+              <div class="card-title mb-12">Histórico de Aprovação</div>
+              <div class="timeline">
+                <div class="timeline-item">
+                  <div class="timeline-dot green"></div>
+                  <div class="timeline-date">03/01/2025 · 09:14</div>
+                  <div class="timeline-text">Solicitado por <strong>Joana Carvalho</strong></div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot green"></div>
+                  <div class="timeline-date">07/01/2025 · 14:32</div>
+                  <div class="timeline-text">Aprovado por <strong>Gerência</strong> – André Figueiredo</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot red"></div>
+                  <div class="timeline-date">10/01/2025 · 11:05</div>
+                  <div class="timeline-text">Devolvido por <strong>Diretoria</strong> – Luiz Henrique P. Alves</div>
+                  <div class="timeline-comment">"Revisar proposta 2 – solicitar desconto adicional ao fornecedor."</div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot blue"></div>
+                  <div class="timeline-date">12/01/2025 · 10:48</div>
+                  <div class="timeline-text">Reenviado por <strong>Joana Carvalho</strong></div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot green"></div>
+                  <div class="timeline-date">15/01/2025 · 16:20</div>
+                  <div class="timeline-text">Aprovado pela <strong>Diretoria</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right -->
+            <div>
+              <div class="status-card mb-16">
+                <div class="status-indicator">
+                  <div class="status-dot dot-orange"></div>
+                  <span class="fw-600">Aguardando Financeiro</span>
+                </div>
+                <p class="text-sm text-muted">CAPEX aprovado e assinado. Aguardando ativação pelo Financeiro.</p>
+              </div>
+
+              <div class="flex gap-8 mb-16">
+                <button class="btn btn-outline" style="flex:1;" onclick="alert('Funcionalidade de edição disponível no sistema real')">
+                  ✏️ Editar Solicitação
+                </button>
+                <button class="btn btn-secondary" style="flex:1;">
+                  💬 Abrir Chat
+                </button>
+              </div>
+
+              <div class="webdox-widget mb-16">
+                <h4>📝 Status WebDox – Assinaturas</h4>
+                <div class="signer-item">
+                  <span class="signer-check">✔</span>
+                  <span>Joana Carvalho <span style="color:var(--text-muted);font-size:12px;">(Solicitante)</span></span>
+                </div>
+                <div class="signer-item">
+                  <span class="signer-check">✔</span>
+                  <span>André Figueiredo <span style="color:var(--text-muted);font-size:12px;">(Gerência)</span></span>
+                </div>
+                <div class="signer-item">
+                  <span class="signer-pending">◯</span>
+                  <span style="color:var(--text-muted);">Luiz Henrique P. Alves <span style="font-size:12px;">(Diretoria)</span></span>
+                </div>
+                <div style="margin-top:10px;padding-top:10px;border-top:1px solid #DDD6FE;font-size:12px;color:var(--purple);font-weight:600;">2 de 3 assinaturas concluídas</div>
+              </div>
+
+              <div style="margin-top:16px;padding:16px;background:#FFF3EE;border:2px dashed var(--accent);border-radius:10px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                  <span style="font-size:18px;">🏦</span>
+                  <span class="fw-700" style="color:var(--accent);">Etapa Final – Ativação no Bimer</span>
+                </div>
+                <p class="text-sm text-muted mb-12">Esta etapa só é realizada após aprovação completa e assinatura de todos os signatários no WebDox. O Financeiro deve criar o centro de custo manualmente no Bimer e registrar o código abaixo para ativar no app.</p>
+                <div class="alert-banner alert-warning" style="margin-bottom:12px;">
+                  <span>⚠</span>
+                  <span><strong>Pendente:</strong> Aguardando conclusão das assinaturas WebDox antes de liberar este campo.</span>
+                </div>
+                <div class="flex gap-8" style="margin-bottom:8px;">
+                  <input type="text" class="form-control" placeholder="Ex: BIM-2025-0047" style="flex:1;" disabled>
+                  <button class="btn btn-success" disabled>Ativar Centro</button>
+                </div>
+                <div class="form-hint">🔒 Campo liberado somente após todas as assinaturas concluídas. Exclusivo para o Financeiro.</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 4: OPEX
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-opex">
+      <div class="page-header">
+        <div>
+          <h2>Controle OPEX Mensal</h2>
+          <p>Saldos por centro de custo · Exercício 2025</p>
+        </div>
+      </div>
+
+      <div class="filter-bar mb-20">
+        <select class="filter-select">
+          <option>CC-2024-007 – Terminal Santos – Ops</option>
+          <option>CC-2025-003 – TI & Sistemas Portuários</option>
+          <option>CC-2025-011 – Comercial – SP</option>
+        </select>
+        <select class="filter-select"><option>2025</option><option>2024</option></select>
+      </div>
+
+      <div class="metric-cards mb-20">
+        <div class="metric-card" style="border-top:3px solid var(--accent);">
+          <div class="metric-label">Orçamento Anual</div>
+          <div class="metric-value">R$ 1.200.000</div>
+        </div>
+        <div class="metric-card" style="border-top:3px solid var(--warning);">
+          <div class="metric-label">Consumido</div>
+          <div class="metric-value">R$ 876.400</div>
+          <div class="metric-pct" style="color:var(--warning);">73% do orçamento</div>
+        </div>
+        <div class="metric-card" style="border-top:3px solid var(--purple);">
+          <div class="metric-label">Comprometido</div>
+          <div class="metric-value">R$ 124.000</div>
+        </div>
+        <div class="metric-card" style="border-top:3px solid var(--success);">
+          <div class="metric-label">Disponível</div>
+          <div class="metric-value">R$ 199.600</div>
+          <div class="metric-pct" style="color:var(--success);">17% restante</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Detalhamento Mensal – 2025</div>
+          <div class="flex gap-8">
+            <span class="badge badge-yellow">⚠ 1 mês estourado</span>
+            <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px;">Exportar</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Mês</th>
+                <th>Orçamento Mensal</th>
+                <th>Consumido</th>
+                <th>Comprometido</th>
+                <th>Em Trânsito</th>
+                <th>Disponível</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="month-past"><td>Janeiro</td><td>R$ 100.000</td><td>R$ 94.300</td><td>R$ 5.700</td><td>R$ 0</td><td>R$ 0</td><td><span class="badge badge-green">✔ Encerrado</span></td></tr>
+              <tr class="month-past"><td>Fevereiro</td><td>R$ 100.000</td><td>R$ 88.700</td><td>R$ 11.300</td><td>R$ 0</td><td>R$ 0</td><td><span class="badge badge-green">✔ Encerrado</span></td></tr>
+              <tr class="month-past"><td>Março</td><td>R$ 100.000</td><td>R$ 97.200</td><td>R$ 2.800</td><td>R$ 0</td><td>R$ 0</td><td><span class="badge badge-green">✔ Encerrado</span></td></tr>
+              <tr class="month-past"><td>Abril</td><td>R$ 100.000</td><td>R$ 91.500</td><td>R$ 8.500</td><td>R$ 0</td><td>R$ 0</td><td><span class="badge badge-green">✔ Encerrado</span></td></tr>
+              <tr class="month-past"><td>Maio</td><td>R$ 100.000</td><td>R$ 103.400</td><td>R$ 0</td><td>R$ 0</td><td>R$ -3.400</td><td><span class="badge badge-red">🔴 Estourado</span></td></tr>
+              <tr class="month-past"><td>Junho</td><td>R$ 100.000</td><td>R$ 85.600</td><td>R$ 14.400</td><td>R$ 0</td><td>R$ 0</td><td><span class="badge badge-green">✔ Encerrado</span></td></tr>
+              <tr class="month-past"><td>Julho</td><td>R$ 100.000</td><td>R$ 92.100</td><td>R$ 7.900</td><td>R$ 0</td><td>R$ 0</td><td><span class="badge badge-green">✔ Encerrado</span></td></tr>
+              <tr class="month-past"><td>Agosto</td><td>R$ 100.000</td><td>R$ 89.400</td><td>R$ 10.600</td><td>R$ 0</td><td>R$ 0</td><td><span class="badge badge-green">✔ Encerrado</span></td></tr>
+              <tr class="month-past"><td>Setembro</td><td>R$ 100.000</td><td>R$ 134.200</td><td>R$ 0</td><td>R$ 0</td><td>R$ -34.200</td><td><span class="badge badge-red">🔴 Estourado</span></td></tr>
+              <tr class="month-current"><td>Outubro ← Mês Atual</td><td>R$ 100.000</td><td>R$ 58.400</td><td>R$ 18.000</td><td>R$ 5.200</td><td>R$ 18.400</td><td><span class="badge badge-blue">▶ Em Curso</span></td></tr>
+              <tr><td style="color:var(--text-light);">Novembro</td><td>R$ 100.000</td><td>—</td><td>—</td><td>—</td><td>R$ 100.000</td><td><span class="badge badge-gray">Futuro</span></td></tr>
+              <tr><td style="color:var(--text-light);">Dezembro</td><td>R$ 100.000</td><td>—</td><td>—</td><td>—</td><td>R$ 100.000</td><td><span class="badge badge-gray">Futuro</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;">
+          <button class="btn btn-primary" disabled title="Orçamento mensal insuficiente">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            Nova Solicitação OPEX — Bloqueado (Orçamento Insuficiente)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 5: BUDGET REVISION
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-budget">
+      <div class="page-header">
+        <div>
+          <h2>Revisão de Budget</h2>
+          <p>Solicite ajuste de orçamento mensal ou anual</p>
+        </div>
+      </div>
+
+      <div class="grid-2" style="align-items:start;">
+        <div class="card">
+          <div class="card-title mb-16">Solicitação de Revisão de Budget</div>
+
+          <div class="form-row cols-2">
+            <div class="form-group">
+              <label>Centro de Custo *</label>
+              <select class="form-control"><option>CC-2024-007 – Terminal Santos – Ops</option></select>
+            </div>
+            <div class="form-group">
+              <label>Mês de Referência *</label>
+              <select class="form-control"><option>Outubro/2025</option></select>
+            </div>
+          </div>
+
+          <div class="form-row cols-2">
+            <div class="form-group">
+              <label>Valor Atual (R$)</label>
+              <input type="text" class="form-control" value="R$ 85.000,00" disabled style="background:#F8FAFC;color:var(--text-muted);">
+            </div>
+            <div class="form-group">
+              <label>Novo Valor Solicitado (R$) *</label>
+              <input type="text" class="form-control" value="R$ 120.000,00">
+            </div>
+          </div>
+
+          <div class="form-group mb-16">
+            <label>Justificativa *</label>
+            <textarea class="form-control" rows="4">Aumento necessário para cobrir custos adicionais decorrentes da expansão do contrato com o fornecedor principal. O volume de operações aumentou 35% em relação ao mês anterior, gerando necessidade de reforço orçamentário para manutenção preventiva e peças de reposição.</textarea>
+          </div>
+
+          <div class="form-group mb-20">
+            <label>Documentos de Suporte</label>
+            <div style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;color:var(--text-muted);font-size:13px;cursor:pointer;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+              📎 Clique para anexar ou arraste arquivos aqui
+            </div>
+          </div>
+
+          <div class="flex gap-8" style="justify-content:flex-end;">
+            <button class="btn btn-secondary">Cancelar</button>
+            <button class="btn btn-primary">Enviar para Aprovação</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="card mb-20">
+            <div class="card-title mb-8">Fluxo de Aprovação</div>
+            <p class="text-sm text-muted mb-16">Esta solicitação seguirá o fluxo de 3 níveis:</p>
+
+            <div class="approval-steps">
+              <div class="step done">
+                <div class="step-circle">✔</div>
+                <div class="step-label">Gerência<br><span style="font-size:10px;font-weight:400;">André Figueiredo</span></div>
+              </div>
+              <div class="step active">
+                <div class="step-circle">2</div>
+                <div class="step-label">Controller<br><span style="font-size:10px;font-weight:400;">Luiz Henrique P. Alves</span></div>
+              </div>
+              <div class="step pending">
+                <div class="step-circle">3</div>
+                <div class="step-label">Dir. Financeira<br><span style="font-size:10px;font-weight:400;">Mariana Teixeira</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title mb-12">Histórico de Revisões – CC-2024-007</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Mês</th><th>De</th><th>Para</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>Mar/2025</td><td>R$ 80.000</td><td>R$ 95.000</td><td><span class="badge badge-green">Aprovado</span></td></tr>
+                  <tr><td>Jun/2025</td><td>R$ 85.000</td><td>R$ 110.000</td><td><span class="badge badge-green">Aprovado</span></td></tr>
+                  <tr><td>Ago/2025</td><td>R$ 90.000</td><td>R$ 130.000</td><td><span class="badge badge-red">Reprovado</span></td></tr>
+                  <tr><td>Out/2025</td><td>R$ 85.000</td><td>R$ 120.000</td><td><span class="badge badge-blue">Em Análise</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 6: VOFF
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-voff">
+      <div class="page-header">
+        <div>
+          <h2>VOFF – Aditivos de CAPEX</h2>
+          <p>Variação de ordem de fornecimento (aditivos em real e dólar)</p>
+        </div>
+      </div>
+
+      <div class="alert-banner alert-warning">
+        <span style="font-size:18px;">⚠</span>
+        <div>
+          <strong>Cotação de Fevereiro/2025 não cadastrada.</strong><br>
+          A submissão de VOFF para este mês está bloqueada. O responsável pela cotação foi notificado automaticamente.
+        </div>
+      </div>
+
+      <div class="grid-2" style="align-items:start;">
+        <div class="card">
+          <div class="card-title mb-16">Nova Solicitação de VOFF</div>
+
+          <div class="form-group mb-16">
+            <label>CAPEX de Referência *</label>
+            <select class="form-control">
+              <option>CAPEX-2025-003 – Expansão Terminal Santos</option>
+              <option>CAPEX-2025-002 – Servidores Datacenter</option>
+              <option>CAPEX-2025-006 – Frota de Reach Stackers Elétricos</option>
+            </select>
+          </div>
+
+          <div class="form-group mb-16">
+            <label>Descrição do Aditivo *</label>
+            <textarea class="form-control" rows="3">Aditivo referente à necessidade de instalação elétrica adicional não prevista no escopo original, conforme laudo técnico emitido em 25/01/2025.</textarea>
+          </div>
+
+          <div class="form-row cols-2">
+            <div class="form-group">
+              <label>Valor em R$ *</label>
+              <input type="text" class="form-control" value="R$ 85.000,00">
+            </div>
+            <div class="form-group">
+              <label>Cotação do Mês</label>
+              <input type="text" class="form-control" value="Janeiro/2025 – R$ 5,12" disabled style="background:#F8FAFC;color:var(--text-muted);">
+              <div class="form-hint">Preenchido automaticamente</div>
+            </div>
+          </div>
+
+          <div class="form-group mb-16">
+            <label>Valor Convertido em USD</label>
+            <input type="text" class="form-control" value="$ 16.601,56" disabled style="background:#F8FAFC;font-weight:700;color:var(--success);">
+            <div class="form-hint">Calculado automaticamente com base na cotação do mês</div>
+          </div>
+
+          <div class="form-group mb-20">
+            <label>Justificativa *</label>
+            <textarea class="form-control" rows="3">Necessidade identificada após início da obra, decorrente de estrutura elétrica abaixo da capacidade mínima exigida pelos novos equipamentos.</textarea>
+          </div>
+
+          <button class="btn btn-primary btn-full" disabled style="padding:12px;">
+            🔒 Envio bloqueado – Aguardando Cotação de Fevereiro/2025
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-title mb-12">Histórico de VOFF – CAPEX-2025-003</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Data</th><th>Valor R$</th><th>Valor USD</th><th>Cotação</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>12/01/2025</td>
+                  <td>R$ 42.000</td>
+                  <td>$ 8.203,12</td>
+                  <td>5,12</td>
+                  <td><span class="badge badge-green">Aprovado</span></td>
+                </tr>
+                <tr>
+                  <td>20/01/2025</td>
+                  <td>R$ 18.500</td>
+                  <td>$ 3.613,28</td>
+                  <td>5,12</td>
+                  <td><span class="badge badge-blue">Em Análise</span></td>
+                </tr>
+                <tr>
+                  <td>—</td>
+                  <td>R$ 85.000</td>
+                  <td>$ 16.601,56</td>
+                  <td>5,12</td>
+                  <td><span class="badge badge-gray">Rascunho</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 7: COTAÇÃO
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-cotacao">
+      <div class="page-header">
+        <div>
+          <h2>Cotação Mensal do Dólar</h2>
+          <p>Gerenciamento das cotações utilizadas nos cálculos de VOFF</p>
+        </div>
+        <button class="btn btn-primary">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Nova Cotação
+        </button>
+      </div>
+
+      <div class="alert-banner alert-info mb-20">
+        <span>ℹ</span>
+        <span>O responsável pela cotação foi <strong>notificado automaticamente</strong> em 01/10/2025 sobre a ausência das cotações de Out, Nov e Dez/2025.</span>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Mês/Ano</th>
+                <th>Cotação (R$/USD)</th>
+                <th>Fonte</th>
+                <th>Cadastrado por</th>
+                <th>Data de Cadastro</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="fw-600">Janeiro/2025</td><td class="fw-700" style="font-family:'DM Mono';">R$ 5,12</td><td>Banco Central</td><td>Mariana Teixeira</td><td>02/01/2025</td><td><span class="badge badge-green">✔ Ativo</span></td></tr>
+              <tr><td class="fw-600">Fevereiro/2025</td><td class="fw-700" style="font-family:'DM Mono';">R$ 5,08</td><td>Banco Central</td><td>Mariana Teixeira</td><td>03/02/2025</td><td><span class="badge badge-green">✔ Ativo</span></td></tr>
+              <tr><td class="fw-600">Março/2025</td><td class="fw-700" style="font-family:'DM Mono';">R$ 4,97</td><td>Manual</td><td>Luiz Henrique P. Alves</td><td>03/03/2025</td><td><span class="badge badge-green">✔ Ativo</span></td></tr>
+              <tr><td class="fw-600">Abril/2025</td><td class="fw-700" style="font-family:'DM Mono';">R$ 5,03</td><td>Banco Central</td><td>Mariana Teixeira</td><td>01/04/2025</td><td><span class="badge badge-green">✔ Ativo</span></td></tr>
+              <tr><td class="fw-600">Maio/2025</td><td class="fw-700" style="font-family:'DM Mono';">R$ 5,21</td><td>Banco Central</td><td>Mariana Teixeira</td><td>02/05/2025</td><td><span class="badge badge-green">✔ Ativo</span></td></tr>
+              <tr><td class="fw-600">Junho/2025</td><td class="fw-700" style="font-family:'DM Mono';">R$ 5,18</td><td>Banco Central</td><td>Mariana Teixeira</td><td>02/06/2025</td><td><span class="badge badge-green">✔ Ativo</span></td></tr>
+              <tr><td class="fw-600">Julho/2025</td><td class="fw-700" style="font-family:'DM Mono';">R$ 5,34</td><td>Manual</td><td>Luiz Henrique P. Alves</td><td>01/07/2025</td><td><span class="badge badge-green">✔ Ativo</span></td></tr>
+              <tr><td class="fw-600">Agosto/2025</td><td class="fw-700" style="font-family:'DM Mono';">R$ 5,29</td><td>Banco Central</td><td>Mariana Teixeira</td><td>04/08/2025</td><td><span class="badge badge-green">✔ Ativo</span></td></tr>
+              <tr><td class="fw-600">Setembro/2025</td><td class="fw-700" style="font-family:'DM Mono';">R$ 5,41</td><td>Banco Central</td><td>Mariana Teixeira</td><td>02/09/2025</td><td><span class="badge badge-green">✔ Ativo</span></td></tr>
+              <tr><td class="fw-600" style="color:var(--text-muted);">Outubro/2025</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="badge badge-orange">⚠ Pendente</span></td></tr>
+              <tr><td class="fw-600" style="color:var(--text-muted);">Novembro/2025</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="badge badge-orange">⚠ Pendente</span></td></tr>
+              <tr><td class="fw-600" style="color:var(--text-muted);">Dezembro/2025</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="badge badge-orange">⚠ Pendente</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 8: CHAT
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-chat">
+      <div class="page-header" style="margin-bottom:16px;">
+        <div>
+          <h2>Chat Interno</h2>
+          <p>Comunicação atrelada às solicitações</p>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="chat-layout">
+          <div class="chat-list">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Conversas Ativas</div>
+
+            <div class="chat-list-item active">
+              <div class="chat-item-meta">
+                <div class="chat-item-title">CAPEX-2025-003</div>
+                <div class="chat-item-time">14:32</div>
+              </div>
+              <div class="chat-item-preview">Precisamos revisar o escopo antes...</div>
+              <span class="badge badge-red" style="font-size:10px;margin-top:4px;">2 novas</span>
+            </div>
+
+            <div class="chat-list-item">
+              <div class="chat-item-meta">
+                <div class="chat-item-title">CAPEX-2025-001</div>
+                <div class="chat-item-time">09:15</div>
+              </div>
+              <div class="chat-item-preview">Documentação aprovada pela Gerência</div>
+            </div>
+
+            <div class="chat-list-item">
+              <div class="chat-item-meta">
+                <div class="chat-item-title">OPEX – Budget Out/25</div>
+                <div class="chat-item-time">Ontem</div>
+              </div>
+              <div class="chat-item-preview">Por favor envie a justificativa formal...</div>
+              <span class="badge badge-blue" style="font-size:10px;margin-top:4px;">1 nova</span>
+            </div>
+
+            <div class="chat-list-item">
+              <div class="chat-item-meta">
+                <div class="chat-item-title">VOFF-2025-002</div>
+                <div class="chat-item-time">22/01</div>
+              </div>
+              <div class="chat-item-preview">Aditivo aprovado. Código: VOFF-22-B</div>
+            </div>
+          </div>
+
+          <div class="chat-window">
+            <div class="chat-header">
+              <div class="fw-600">CAPEX-2025-003 – Equipamentos de Movimentação</div>
+              <div class="text-sm text-muted mt-4">3 participantes · Joana Carvalho, Rafael Martins, Luiz Henrique P. Alves</div>
+            </div>
+
+            <div class="chat-messages">
+              <div class="chat-msg">
+                <div class="msg-avatar">JC</div>
+                <div>
+                  <div class="msg-sender">Joana Carvalho · Solicitante · 08:42</div>
+                  <div class="msg-bubble">Bom dia! Segue a proposta revisada do Fornecedor 2 conforme solicitado pela Diretoria. O fornecedor concedeu um desconto adicional de 8%.</div>
+                </div>
+              </div>
+
+              <div class="chat-msg mine">
+                <div class="msg-avatar">RM</div>
+                <div>
+                  <div class="msg-sender">Rafael Martins · Controller · 10:15</div>
+                  <div class="msg-bubble">Recebido. Vou analisar e retorno até amanhã.</div>
+                </div>
+              </div>
+
+              <div class="chat-msg">
+                <div class="msg-avatar">JC</div>
+                <div>
+                  <div class="msg-sender">Joana Carvalho · 10:18</div>
+                  <div class="msg-bubble">Perfeito, qualquer dúvida estou à disposição. 👍</div>
+                </div>
+              </div>
+
+              <div class="chat-msg system-msg" style="align-self:center;max-width:100%;">
+                <div class="system-bubble">✔ CAPEX aprovado pela Gerência em 07/01/2025 às 14:32</div>
+              </div>
+
+              <div class="chat-msg">
+                <div class="msg-avatar purple">RO</div>
+                <div>
+                  <div class="msg-sender">Luiz Henrique P. Alves · Diretoria · 11:05</div>
+                  <div class="msg-bubble">Precisamos revisar o escopo antes da aprovação final. A proposta do fornecedor 2 está coerente, mas quero verificar os prazos de entrega.</div>
+                </div>
+              </div>
+
+              <div class="chat-msg">
+                <div class="msg-avatar">JC</div>
+                <div>
+                  <div class="msg-sender">Joana Carvalho · 11:32</div>
+                  <div class="msg-bubble">Entendido, Dr. Roberto. O prazo de entrega é de 45 dias corridos após a assinatura do contrato. Posso solicitar uma carta de confirmação ao fornecedor se necessário.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-input-area">
+              <textarea class="chat-input" rows="1" placeholder="Escreva uma mensagem...">
+
+              </textarea>
+              <button class="btn btn-secondary" style="padding:10px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              </button>
+              <button class="btn btn-primary" style="padding:10px 16px;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 9: CENTROS DE CUSTO
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-centros">
+      <div class="page-header">
+        <div>
+          <h2>Centros de Custo</h2>
+          <p>23 ativos · 2 pendentes ativação no Bimer</p>
+        </div>
+        <button class="btn btn-primary">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          Solicitar Novo Centro
+        </button>
+      </div>
+
+      <div class="alert-banner alert-warning mb-20">
+        <span>⚠</span>
+        <span><strong>2 centros de custo</strong> aguardam o código Bimer para serem ativados. O Financeiro foi notificado.</span>
+      </div>
+
+      <div class="card" style="position:relative;">
+        <div class="filter-bar mb-16">
+          <input class="search-input" placeholder="🔍  Buscar por código ou nome...">
+          <select class="filter-select"><option>Todos os Tipos</option><option>CAPEX</option><option>OPEX</option></select>
+          <select class="filter-select"><option>Todos os Status</option><option>Ativo</option><option>Pendente Bimer</option><option>Inativo</option></select>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Responsável</th>
+                <th>Status</th>
+                <th>Orçamento Anual</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-family:'DM Mono';font-size:12px;">CC-2024-007</td>
+                <td class="fw-600">Terminal Santos – Ops</td>
+                <td><span class="badge badge-blue">CAPEX</span></td>
+                <td>Joana Carvalho</td>
+                <td><span class="badge badge-green">● Ativo</span></td>
+                <td>R$ 1.200.000</td>
+                <td><div class="action-icons"><div class="action-btn" onclick="openSlideOver()"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div></td>
+              </tr>
+              <tr>
+                <td style="font-family:'DM Mono';font-size:12px;">CC-2025-003</td>
+                <td class="fw-600">TI & Sistemas Portuários</td>
+                <td><span class="badge badge-purple">OPEX</span></td>
+                <td>Rafael Martins</td>
+                <td><span class="badge badge-green">● Ativo</span></td>
+                <td>R$ 480.000</td>
+                <td><div class="action-icons"><div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div></td>
+              </tr>
+              <tr class="bimer-pending-row">
+                <td style="font-family:'DM Mono';font-size:12px;color:var(--orange);">CC-2025-014</td>
+                <td class="fw-600">Automação Pátio – AGV</td>
+                <td><span class="badge badge-blue">CAPEX</span></td>
+                <td>Patricia Souza</td>
+                <td><span class="badge badge-orange">⏳ Pendente Bimer</span></td>
+                <td>R$ 850.000</td>
+                <td><div class="action-icons"><div class="action-btn" onclick="openSlideOver()"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div></td>
+              </tr>
+              <tr class="bimer-pending-row">
+                <td style="font-family:'DM Mono';font-size:12px;color:var(--orange);">CC-2025-015</td>
+                <td class="fw-600">Expansão Terminal Norte</td>
+                <td><span class="badge badge-blue">CAPEX</span></td>
+                <td>Eduardo Costa</td>
+                <td><span class="badge badge-orange">⏳ Pendente Bimer</span></td>
+                <td>R$ 620.000</td>
+                <td><div class="action-icons"><div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div></td>
+              </tr>
+              <tr>
+                <td style="font-family:'DM Mono';font-size:12px;">CC-2024-012</td>
+                <td class="fw-600">Comercial Nacional</td>
+                <td><span class="badge badge-purple">OPEX</span></td>
+                <td>Luiz Henrique P. Alves</td>
+                <td><span class="badge badge-green">● Ativo</span></td>
+                <td>R$ 360.000</td>
+                <td><div class="action-icons"><div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div></td>
+              </tr>
+              <tr>
+                <td style="font-family:'DM Mono';font-size:12px;color:var(--text-light);">CC-2023-005</td>
+                <td class="fw-600" style="color:var(--text-muted);">Projeto Porto Seco 2023</td>
+                <td><span class="badge badge-gray">CAPEX</span></td>
+                <td style="color:var(--text-muted);">—</td>
+                <td><span class="badge badge-gray">Inativo</span></td>
+                <td style="color:var(--text-muted);">—</td>
+                <td><div class="action-icons"><div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- SLIDE OVER -->
+        <div class="slide-over-backdrop" id="so-backdrop" onclick="closeSlideOver()"></div>
+        <div class="slide-over" id="slide-over">
+          <div class="slide-over-header">
+            <div>
+              <div class="fw-700">CC-2024-007</div>
+              <div class="text-sm text-muted">Terminal Santos – Ops</div>
+            </div>
+            <button class="btn btn-secondary" onclick="closeSlideOver()" style="font-size:12px;padding:6px 10px;">✕ Fechar</button>
+          </div>
+          <div class="slide-over-body">
+            <div class="grid-2 mb-16" style="gap:12px;">
+              <div class="detail-field">
+                <div class="detail-label">Tipo</div>
+                <div class="detail-value"><span class="badge badge-blue">CAPEX</span></div>
+              </div>
+              <div class="detail-field">
+                <div class="detail-label">Status</div>
+                <div class="detail-value"><span class="badge badge-green">● Ativo</span></div>
+              </div>
+            </div>
+            <div class="detail-field mb-12">
+              <div class="detail-label">Responsável</div>
+              <div class="detail-value">Joana Carvalho</div>
+            </div>
+            <div class="detail-field mb-12">
+              <div class="detail-label">Data de Ativação</div>
+              <div class="detail-value">16/01/2025</div>
+            </div>
+            <div class="detail-field mb-12">
+              <div class="detail-label">Código Bimer</div>
+              <div class="detail-value" style="font-family:'DM Mono';color:var(--success);font-weight:700;">BIM-2025-0031</div>
+            </div>
+            <div class="detail-field mb-20">
+              <div class="detail-label">Orçamento Anual</div>
+              <div class="detail-value fw-700" style="font-size:18px;color:var(--accent);">R$ 1.200.000</div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="card-title mb-12">Resumo de Consumo</div>
+            <div style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+                <span>Consumido</span><span class="fw-600">R$ 876.400 (73%)</span>
+              </div>
+              <div class="progress-bar-bg"><div class="progress-bar-fill fill-orange" style="width:73%"></div></div>
+            </div>
+            <div style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+                <span>Comprometido</span><span class="fw-600">R$ 124.000 (10%)</span>
+              </div>
+              <div class="progress-bar-bg"><div class="progress-bar-fill fill-blue" style="width:10%"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+                <span>Disponível</span><span class="fw-600 text-success">R$ 199.600 (17%)</span>
+              </div>
+              <div class="progress-bar-bg"><div class="progress-bar-fill fill-green" style="width:17%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════
+         SCREEN: CAPEX – CENTROS DE CUSTO
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-capex-cc">
+      <div class="page-header">
+        <div>
+          <h2>CAPEX – Centros de Custo</h2>
+          <p>Galeria de centros de custo aprovados · Exercício 2025</p>
+        </div>
+        <div class="flex gap-8">
+          <select class="filter-select"><option>Todos os Status</option><option>Ativo</option><option>Bimer Pendente</option><option>Bimer Incluído</option></select>
+          <button class="btn btn-primary">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            Solicitar Novo CAPEX
+          </button>
+        </div>
+      </div>
+
+      <div class="metric-cards mb-20">
+        <div class="metric-card" style="border-top:3px solid var(--success);">
+          <div class="metric-label">Bimer Incluído</div>
+          <div class="metric-value">8</div>
+          <div class="metric-pct text-success">Centros ativos</div>
+        </div>
+        <div class="metric-card" style="border-top:3px solid var(--orange);">
+          <div class="metric-label">Bimer Pendente</div>
+          <div class="metric-value">2</div>
+          <div class="metric-pct" style="color:var(--orange);">Aguardando Financeiro</div>
+        </div>
+        <div class="metric-card" style="border-top:3px solid var(--accent);">
+          <div class="metric-label">Total CAPEX 2025</div>
+          <div class="metric-value">R$ 3.500.000</div>
+        </div>
+        <div class="metric-card" style="border-top:3px solid var(--purple);">
+          <div class="metric-label">Em Aprovação</div>
+          <div class="metric-value">3</div>
+          <div class="metric-pct">Solicitações abertas</div>
+        </div>
+      </div>
+
+      <!-- Gallery -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+
+        <div class="card" style="border-top:4px solid var(--success);">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+            <div>
+              <div class="fw-700">Terminal Santos – Ops</div>
+              <div class="text-xs text-muted">CC-2024-007</div>
+            </div>
+            <span class="badge badge-green">● Ativo</span>
+          </div>
+          <div class="detail-field mb-8"><div class="detail-label">Responsável</div><div class="detail-value text-sm">Joana Carvalho</div></div>
+          <div class="detail-field mb-8"><div class="detail-label">Valor Aprovado</div><div class="detail-value fw-700" style="color:var(--accent);">R$ 1.200.000</div></div>
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span>Executado</span><span class="fw-600">73%</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill fill-orange" style="width:73%"></div></div>
+          </div>
+          <div style="padding:8px;background:var(--success-bg);border-radius:6px;font-size:12px;color:var(--success);font-weight:600;">🏦 Bimer: BIM-2025-0031 ✔</div>
+        </div>
+
+        <div class="card" style="border-top:4px solid var(--success);">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+            <div>
+              <div class="fw-700">TI &amp; Sistemas Portuários</div>
+              <div class="text-xs text-muted">CC-2025-003</div>
+            </div>
+            <span class="badge badge-green">● Ativo</span>
+          </div>
+          <div class="detail-field mb-8"><div class="detail-label">Responsável</div><div class="detail-value text-sm">Rafael Martins</div></div>
+          <div class="detail-field mb-8"><div class="detail-label">Valor Aprovado</div><div class="detail-value fw-700" style="color:var(--accent);">R$ 480.000</div></div>
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span>Executado</span><span class="fw-600">45%</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill fill-blue" style="width:45%"></div></div>
+          </div>
+          <div style="padding:8px;background:var(--success-bg);border-radius:6px;font-size:12px;color:var(--success);font-weight:600;">🏦 Bimer: BIM-2025-0028 ✔</div>
+        </div>
+
+        <div class="card" style="border-top:4px solid var(--success);">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+            <div>
+              <div class="fw-700">Frota Reach Stackers Elétricos</div>
+              <div class="text-xs text-muted">CC-2024-012</div>
+            </div>
+            <span class="badge badge-green">● Ativo</span>
+          </div>
+          <div class="detail-field mb-8"><div class="detail-label">Responsável</div><div class="detail-value text-sm">Patricia Souza</div></div>
+          <div class="detail-field mb-8"><div class="detail-label">Valor Aprovado</div><div class="detail-value fw-700" style="color:var(--accent);">R$ 562.000</div></div>
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span>Executado</span><span class="fw-600">88%</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill fill-green" style="width:88%"></div></div>
+          </div>
+          <div style="padding:8px;background:var(--success-bg);border-radius:6px;font-size:12px;color:var(--success);font-weight:600;">🏦 Bimer: BIM-2025-0019 ✔</div>
+        </div>
+
+        <div class="card" style="border-top:4px solid var(--orange);">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+            <div>
+              <div class="fw-700">Automação Pátio – AGV</div>
+              <div class="text-xs text-muted">CC-2025-014</div>
+            </div>
+            <span class="badge badge-orange">⏳ Bimer Pendente</span>
+          </div>
+          <div class="detail-field mb-8"><div class="detail-label">Responsável</div><div class="detail-value text-sm">Patricia Souza</div></div>
+          <div class="detail-field mb-8"><div class="detail-label">Valor Aprovado</div><div class="detail-value fw-700" style="color:var(--accent);">R$ 850.000</div></div>
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span>Executado</span><span class="fw-600">0%</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill fill-blue" style="width:0%"></div></div>
+          </div>
+          <div style="padding:8px;background:#FFF3EE;border:1px dashed var(--orange);border-radius:6px;">
+            <div style="font-size:11px;color:var(--orange);font-weight:600;margin-bottom:4px;">⏳ Aguardando código Bimer</div>
+            <div style="display:flex;gap:6px;"><input type="text" placeholder="BIM-2025-XXXX" style="flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;"><button class="btn btn-success" style="padding:4px 10px;font-size:12px;">Ativar</button></div>
+          </div>
+        </div>
+
+        <div class="card" style="border-top:4px solid var(--orange);">
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+            <div>
+              <div class="fw-700">Expansão Terminal Norte</div>
+              <div class="text-xs text-muted">CC-2025-015</div>
+            </div>
+            <span class="badge badge-orange">⏳ Bimer Pendente</span>
+          </div>
+          <div class="detail-field mb-8"><div class="detail-label">Responsável</div><div class="detail-value text-sm">Eduardo Costa</div></div>
+          <div class="detail-field mb-8"><div class="detail-label">Valor Aprovado</div><div class="detail-value fw-700" style="color:var(--accent);">R$ 620.000</div></div>
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span>Executado</span><span class="fw-600">0%</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill fill-blue" style="width:0%"></div></div>
+          </div>
+          <div style="padding:8px;background:#FFF3EE;border:1px dashed var(--orange);border-radius:6px;">
+            <div style="font-size:11px;color:var(--orange);font-weight:600;margin-bottom:4px;">⏳ Aguardando código Bimer</div>
+            <div style="display:flex;gap:6px;"><input type="text" placeholder="BIM-2025-XXXX" style="flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;"><button class="btn btn-success" style="padding:4px 10px;font-size:12px;">Ativar</button></div>
+          </div>
+        </div>
+
+        <div class="card" style="border:2px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;cursor:pointer;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="width:48px;height:48px;background:var(--bg);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:12px;">+</div>
+          <div class="fw-600 text-muted">Solicitar Novo CAPEX</div>
+          <div class="text-xs text-muted mt-8">Clique para iniciar solicitação</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SCREEN: OPEX – CENTROS DE CUSTO
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-opex-cc">
+      <div class="page-header">
+        <div>
+          <h2>OPEX – Centros de Custo</h2>
+          <p>Visão consolidada dos centros de custo operacionais · 2025</p>
+        </div>
+        <div class="flex gap-8">
+          <select class="filter-select"><option>Todos os Centros</option><option>Operações</option><option>TI</option><option>Comercial</option></select>
+          <button class="btn btn-primary">+ Novo Centro OPEX</button>
+        </div>
+      </div>
+
+      <div class="alert-banner alert-info mb-20">
+        <span>ℹ</span>
+        <div><strong>OPEX vs CAPEX:</strong> Centros de custo OPEX são independentes e representam orçamentos recorrentes (contratos, manutenção, serviços). Não dependem de um CAPEX para existir — são aprovados no planejamento financeiro anual.</div>
+      </div>
+
+      <div class="metric-cards mb-20">
+        <div class="metric-card" style="border-top:3px solid var(--accent);">
+          <div class="metric-label">Total Orçado 2025</div>
+          <div class="metric-value">R$ 5.000.000</div>
+        </div>
+        <div class="metric-card" style="border-top:3px solid var(--warning);">
+          <div class="metric-label">Consumido</div>
+          <div class="metric-value">R$ 4.200.000</div>
+          <div class="metric-pct" style="color:var(--warning);">84% do total</div>
+        </div>
+        <div class="metric-card" style="border-top:3px solid var(--success);">
+          <div class="metric-label">Centros Ativos</div>
+          <div class="metric-value">15</div>
+        </div>
+        <div class="metric-card" style="border-top:3px solid var(--purple);">
+          <div class="metric-label">Com Alerta ≥80%</div>
+          <div class="metric-value">3</div>
+          <div class="metric-pct" style="color:var(--purple);">Requerem atenção</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Centros de Custo OPEX</div>
+          <button class="btn btn-secondary" style="font-size:12px;padding:6px 12px;">Exportar</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nome</th>
+                <th>Responsável</th>
+                <th>Orçamento Anual</th>
+                <th>Consumido</th>
+                <th>Disponível</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-family:'DM Mono';font-size:12px;">OPX-2025-001</td>
+                <td class="fw-600">Manutenção Geral – Santos</td>
+                <td>André Figueiredo</td>
+                <td>R$ 800.000</td>
+                <td><span style="color:var(--warning);font-weight:600;">R$ 680.000 (85%)</span></td>
+                <td>R$ 120.000</td>
+                <td><span class="badge badge-yellow">⚠ Alerta 80%</span></td>
+                <td><div class="action-icons"><div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div></td>
+              </tr>
+              <tr>
+                <td style="font-family:'DM Mono';font-size:12px;">OPX-2025-002</td>
+                <td class="fw-600">Contratos de Serviços – TI</td>
+                <td>Rafael Martins</td>
+                <td>R$ 600.000</td>
+                <td>R$ 390.000 (65%)</td>
+                <td>R$ 210.000</td>
+                <td><span class="badge badge-green">● Normal</span></td>
+                <td><div class="action-icons"><div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div></td>
+              </tr>
+              <tr>
+                <td style="font-family:'DM Mono';font-size:12px;">OPX-2025-003</td>
+                <td class="fw-600">Operações Portuárias – Geral</td>
+                <td>Joana Carvalho</td>
+                <td>R$ 1.200.000</td>
+                <td>R$ 876.400 (73%)</td>
+                <td>R$ 323.600</td>
+                <td><span class="badge badge-green">● Normal</span></td>
+                <td><div class="action-icons"><div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div></td>
+              </tr>
+              <tr>
+                <td style="font-family:'DM Mono';font-size:12px;">OPX-2025-004</td>
+                <td class="fw-600">Comercial – SP</td>
+                <td>Eduardo Costa</td>
+                <td>R$ 360.000</td>
+                <td><span style="color:var(--warning);font-weight:600;">R$ 320.400 (89%)</span></td>
+                <td>R$ 39.600</td>
+                <td><span class="badge badge-yellow">⚠ Alerta 80%</span></td>
+                <td><div class="action-icons"><div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div></td>
+              </tr>
+              <tr>
+                <td style="font-family:'DM Mono';font-size:12px;">OPX-2025-005</td>
+                <td class="fw-600">RH &amp; Benefícios</td>
+                <td>Mariana Teixeira</td>
+                <td>R$ 480.000</td>
+                <td>R$ 240.000 (50%)</td>
+                <td>R$ 240.000</td>
+                <td><span class="badge badge-green">● Normal</span></td>
+                <td><div class="action-icons"><div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SCREEN: CONFIGURAÇÕES
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-config">
+      <div class="page-header">
+        <div>
+          <h2>Configurações do Sistema</h2>
+          <p>Regras de alertas, bloqueios e comportamentos do sistema</p>
+        </div>
+        <button class="btn btn-primary">Salvar Configurações</button>
+      </div>
+
+      <div class="grid-2" style="align-items:start;gap:20px;">
+        <div>
+          <div class="card mb-20">
+            <div class="card-title mb-16">🔔 Regras de Alertas de Orçamento</div>
+
+            <div class="form-group mb-16">
+              <label>Percentual de alerta (OPEX)</label>
+              <div class="flex gap-8 items-center">
+                <input type="range" min="50" max="95" value="80" style="flex:1;" oninput="document.getElementById('pct-label').textContent=this.value+'%'">
+                <span id="pct-label" class="fw-700" style="color:var(--accent);min-width:40px;">80%</span>
+              </div>
+              <div class="form-hint">Enviar notificação quando consumo atingir este percentual</div>
+            </div>
+
+            <div class="form-group mb-16">
+              <label>Percentual de alerta (CAPEX)</label>
+              <div class="flex gap-8 items-center">
+                <input type="range" min="50" max="95" value="80" style="flex:1;" oninput="document.getElementById('pct-label2').textContent=this.value+'%'">
+                <span id="pct-label2" class="fw-700" style="color:var(--accent);min-width:40px;">80%</span>
+              </div>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="form-group mb-12">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" checked style="width:16px;height:16px;accent-color:var(--accent);">
+                Enviar e-mail ao responsável quando atingir alerta
+              </label>
+            </div>
+            <div class="form-group mb-12">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" checked style="width:16px;height:16px;accent-color:var(--accent);">
+                Exibir banner de alerta no painel geral
+              </label>
+            </div>
+            <div class="form-group mb-12">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" style="width:16px;height:16px;accent-color:var(--accent);">
+                Enviar alerta também para o Controller
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title mb-16">🔒 Regras de Bloqueio</div>
+
+            <div class="form-group mb-16">
+              <label>Comportamento ao atingir o limite de OPEX</label>
+              <select class="form-control">
+                <option selected>Bloquear novas solicitações automaticamente</option>
+                <option>Permitir com aprovação especial do Controller</option>
+                <option>Apenas alertar, não bloquear</option>
+              </select>
+            </div>
+
+            <div class="form-group mb-16">
+              <label>Comportamento ao atingir o limite de CAPEX</label>
+              <select class="form-control">
+                <option selected>Bloquear e notificar o Financeiro</option>
+                <option>Permitir solicitação de revisão de budget</option>
+              </select>
+            </div>
+
+            <div class="form-group mb-12">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" checked style="width:16px;height:16px;accent-color:var(--accent);">
+                Bloquear VOFF quando cotação do mês não estiver cadastrada
+              </label>
+            </div>
+            <div class="form-group mb-12">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" checked style="width:16px;height:16px;accent-color:var(--accent);">
+                Bloquear ativação de centro no Bimer antes das assinaturas WebDox
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card mb-20">
+            <div class="card-title mb-16">📧 Notificações</div>
+
+            <div class="form-group mb-16">
+              <label>E-mail do responsável pela cotação do dólar</label>
+              <input type="email" class="form-control" value="mariana.teixeira@itracker.ictsi.com">
+            </div>
+
+            <div class="form-group mb-16">
+              <label>Notificar cotação pendente todo dia</label>
+              <select class="form-control">
+                <option>1º dia útil do mês</option>
+                <option selected>Dia 1 de cada mês</option>
+                <option>Dia 5 de cada mês</option>
+              </select>
+            </div>
+
+            <div class="section-divider"></div>
+
+            <div class="form-group mb-12">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" checked style="width:16px;height:16px;accent-color:var(--accent);">
+                Notificar Financeiro automaticamente após aprovação do CAPEX
+              </label>
+            </div>
+            <div class="form-group mb-12">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" checked style="width:16px;height:16px;accent-color:var(--accent);">
+                Notificar solicitante sobre cada etapa de aprovação
+              </label>
+            </div>
+            <div class="form-group mb-12">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                <input type="checkbox" style="width:16px;height:16px;accent-color:var(--accent);">
+                Resumo diário por e-mail para o Diretor
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title mb-16">🔑 Permissões por Centro de Custo</div>
+            <p class="text-sm text-muted mb-16">Defina quais usuários visualizam cada centro de custo no OPEX.</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Centro de Custo</th><th>Usuários com Acesso</th><th>Ação</th></tr></thead>
+                <tbody>
+                  <tr><td>OPX-2025-001</td><td><span class="badge badge-blue">3 usuários</span></td><td><div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div></td></tr>
+                  <tr><td>OPX-2025-002</td><td><span class="badge badge-blue">5 usuários</span></td><td><div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div></td></tr>
+                  <tr><td>OPX-2025-003</td><td><span class="badge badge-blue">8 usuários</span></td><td><div class="action-btn"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ─── AUTH ───
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-password').value.trim();
+  const err = document.getElementById('login-error');
+  if (email.toLowerCase() === 'joao.vsilva@itracker.ictsi.com' && pass === 'itracker') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'block';
+    initCharts();
+  } else {
+    err.style.display = 'block';
+  }
+}
+
+function doLogout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-shell').style.display = 'none';
+}
+
+// Allow Enter key on login
+document.getElementById('login-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ─── CRF POPUP ───
+function openCRF() {
+  const today = new Date().toLocaleDateString('en-US', {month:'long', year:'numeric'});
+  const titulo = document.getElementById('f-titulo') ? document.getElementById('f-titulo').value : 'Reach Stackers – Terminal Santos';
+  const descricao = document.getElementById('f-descricao') ? document.getElementById('f-descricao').value : '—';
+  const justificativa = document.getElementById('f-justificativa') ? document.getElementById('f-justificativa').value : '—';
+  const valor = document.getElementById('f-valor') ? document.getElementById('f-valor').value : 'R$ 320.000,00';
+  const categoria = document.getElementById('f-categoria') ? document.getElementById('f-categoria').value : 'Equipment';
+  const inicio = document.getElementById('f-inicio') ? document.getElementById('f-inicio').value : '';
+  const fim = document.getElementById('f-fim') ? document.getElementById('f-fim').value : '';
+
+  document.getElementById('crf-date').textContent = today;
+  document.getElementById('crf-project').textContent = titulo;
+  document.getElementById('crf-description').textContent = descricao;
+  document.getElementById('crf-rationale').textContent = justificativa;
+  document.getElementById('crf-budget').textContent = valor;
+  document.getElementById('crf-category').textContent = categoria.toUpperCase();
+  document.getElementById('crf-delivery').textContent = fim ? new Date(fim+'T00:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : 'To be defined';
+  document.getElementById('crf-preparedby').innerHTML = 'Joana Carvalho<br><span style="font-size:10px;color:#666;">Requestor</span>';
+
+  const backdrop = document.getElementById('crf-backdrop');
+  backdrop.style.display = 'flex';
+}
+
+function closeCRF() {
+  document.getElementById('crf-backdrop').style.display = 'none';
+}
+
+// Close on backdrop click
+document.getElementById('crf-backdrop').addEventListener('click', function(e) {
+  if (e.target === this) closeCRF();
+});
+
+// ─── NAVIGATION ───
+const breadcrumbs = {
+  'overview': 'Apresentação do Projeto',
+  'dashboard': 'Painel Geral',
+  'capex-form': 'CAPEX / Nova Solicitação',
+  'capex-list': 'CAPEX / Acompanhamento',
+  'capex-cc': 'CAPEX / Centros de Custo',
+  'opex-cc': 'OPEX / Centros de Custo',
+  'opex': 'OPEX / Controle Mensal',
+  'budget': 'OPEX / Revisão de Budget',
+  'voff': 'Aditivos / VOFF',
+  'cotacao': 'Aditivos / Cotação do Dólar',
+  'chat': 'Comunicação / Chat Interno',
+  'centros': 'Configurações / Centros de Custo',
+  'capex-cc': 'CAPEX / Centros de Custo',
+  'opex-cc': 'OPEX / Centros de Custo',
+  'config': 'Configurações / Sistema',
+};
+
+function showScreen(name, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const screen = document.getElementById('screen-' + name);
+  if (screen) screen.classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('breadcrumb').innerHTML = breadcrumbs[name] || name;
+}
+
+// ─── DETAIL PANEL ───
+function openDetail() {
+  const d = document.getElementById('capex-detail');
+  d.style.display = d.style.display === 'none' ? 'block' : 'none';
+  if (d.style.display === 'block') d.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ─── SLIDE OVER ───
+function openSlideOver() {
+  document.getElementById('so-backdrop').style.display = 'block';
+  document.getElementById('slide-over').classList.add('open');
+}
+
+function closeSlideOver() {
+  document.getElementById('so-backdrop').style.display = 'none';
+  document.getElementById('slide-over').classList.remove('open');
+}
+
+// ─── CHARTS ───
+function initCharts() {
+  // OPEX bar chart
+  const ctxOpex = document.getElementById('chart-opex');
+  if (ctxOpex) {
+    new Chart(ctxOpex, {
+      type: 'bar',
+      data: {
+        labels: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+        datasets: [{
+          label: 'Consumido (R$)',
+          data: [94300, 88700, 97200, 91500, 103400, 85600, 92100, 89400, 134200, 58400, 0, 0],
+          backgroundColor: (ctx) => {
+            const v = ctx.raw;
+            if (v > 100000) return '#DC2626';
+            if (v > 85000) return '#D97706';
+            return '#2E86C1';
+          },
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { ticks: { callback: v => 'R$' + (v/1000) + 'k', font: { size: 10 } }, grid: { color: '#F1F5F9' } },
+          x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // CAPEX donut
+  const ctxCapex = document.getElementById('chart-capex');
+  if (ctxCapex) {
+    new Chart(ctxCapex, {
+      type: 'doughnut',
+      data: {
+        labels: ['Aprovado','Em Aprovação','Aguard. Financeiro','Reprovado'],
+        datasets: [{
+          data: [5, 3, 2, 2],
+          backgroundColor: ['#059669','#2E86C1','#EA580C','#DC2626'],
+          borderWidth: 2,
+          borderColor: '#fff',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        cutout: '65%',
+      }
+    });
+  }
+}
+</script>
+
+<!-- ═══════════════════════════════════════
+     CRF POPUP MODAL
+═══════════════════════════════════════ -->
+<div id="crf-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;align-items:center;justify-content:center;">
+  <div style="background:white;width:90%;max-width:820px;max-height:90vh;overflow-y:auto;border-radius:12px;box-shadow:0 32px 80px rgba(0,0,0,0.4);">
+
+    <!-- Word-like toolbar -->
+    <div style="background:#2B579A;padding:10px 20px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="background:white;border-radius:4px;padding:3px 8px;font-size:12px;font-weight:700;color:#2B579A;">W</div>
+        <span style="color:white;font-size:13px;font-weight:600;">Capital Request Form (CRF) – iTracker Logística Inteligente</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="window.print()" style="background:rgba(255,255,255,0.15);border:none;color:white;padding:5px 12px;border-radius:4px;font-size:12px;cursor:pointer;">🖨 Imprimir</button>
+        <button onclick="closeCRF()" style="background:rgba(255,255,255,0.15);border:none;color:white;padding:5px 12px;border-radius:4px;font-size:12px;cursor:pointer;">✕ Fechar</button>
+      </div>
+    </div>
+
+    <!-- Document body -->
+    <div style="padding:40px 60px;font-family:'Times New Roman',serif;">
+
+      <!-- Header -->
+      <div style="text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #2B579A;">
+        <div style="font-size:11px;letter-spacing:2px;color:#666;text-transform:uppercase;margin-bottom:4px;">ICTSI – International Container Terminal Services, Inc.</div>
+        <div style="font-size:22px;font-weight:700;color:#2B579A;letter-spacing:1px;">CAPITAL REQUEST FORM</div>
+        <div style="font-size:11px;color:#666;margin-top:4px;">iTracker Logística Inteligente · Confidential</div>
+      </div>
+
+      <!-- Info grid -->
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;">
+        <tr>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;width:25%;">Date</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;" id="crf-date">—</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;width:25%;">Legal Entity</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;">iTracker Logística Inteligente</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;">Remaining Concession</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;">26 years</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;">Budget Classification</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;">BUDGETED CAPEX</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;">Project Name</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;font-weight:600;" id="crf-project" colspan="3">—</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;">Capex Category</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;" id="crf-category">—</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;">Capex Objective</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;">MAINTENANCE / EXPANSION</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;">Budget (R$)</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;font-weight:700;color:#2B579A;" id="crf-budget">—</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;">Delivery Time</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;" id="crf-delivery">—</td>
+        </tr>
+      </table>
+
+      <!-- Description -->
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;">
+        <tr>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;">Description and Specifications</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #ccc;padding:12px 10px;min-height:60px;" id="crf-description">—</td>
+        </tr>
+      </table>
+
+      <!-- Strategic -->
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;">
+        <tr>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;" colspan="2">Capex Strategic Objectives and Financial Return</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;width:35%;">Strategic Objectives / Capex Rationale</td>
+          <td style="border:1px solid #ccc;padding:12px 10px;" id="crf-rationale">—</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;">Financial Returns</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;">Payback: To be defined &nbsp;&nbsp;&nbsp; IRR (%): To be defined</td>
+        </tr>
+      </table>
+
+      <!-- Recommendations & Signatures -->
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;font-size:12px;">
+        <tr>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;" colspan="4">Recommendations</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #ccc;padding:40px 10px 10px;text-align:center;" colspan="4">
+            <div style="font-style:italic;color:#888;font-size:11px;">Pending approval from all stakeholders</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;">Prepared by</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;">Signature</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;background:#f0f4f8;font-weight:700;">Approved by</td>
+          <td style="border:1px solid #ccc;padding:6px 10px;">Signature</td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #ccc;padding:10px;" id="crf-preparedby">—<br><span style="font-size:10px;color:#666;">Requestor</span></td>
+          <td style="border:1px solid #ccc;padding:10px;"><div style="height:40px;border-bottom:1px solid #999;"></div></td>
+          <td style="border:1px solid #ccc;padding:10px;">Luiz H. Porciuncula Alves<br><span style="font-size:10px;color:#666;">CEO – iTracker Logística Inteligente</span></td>
+          <td style="border:1px solid #ccc;padding:10px;"><div style="height:40px;border-bottom:1px solid #999;"></div></td>
+        </tr>
+        <tr>
+          <td style="border:1px solid #ccc;padding:10px;" colspan="2"></td>
+          <td style="border:1px solid #ccc;padding:10px;">Mariana Teixeira<br><span style="font-size:10px;color:#666;">CFO – iTracker Logística Inteligente</span></td>
+          <td style="border:1px solid #ccc;padding:10px;"><div style="height:40px;border-bottom:1px solid #999;"></div></td>
+        </tr>
+      </table>
+
+      <!-- WebDox CTA -->
+      <div style="background:#F0F4FF;border:1px solid #BFDBFE;border-radius:8px;padding:16px;text-align:center;">
+        <div style="font-size:13px;font-weight:700;color:#1E40AF;margin-bottom:8px;">📝 Envio para Assinatura Digital – WebDox</div>
+        <div style="font-size:12px;color:#3B82F6;margin-bottom:12px;">Documento gerado automaticamente. Clique abaixo para enviar aos signatários via WebDox.</div>
+        <button onclick="alert('No sistema real, o documento seria enviado automaticamente via API WebDox para os signatários configurados.')" style="background:#2B579A;color:white;border:none;padding:10px 24px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">
+          Enviar via WebDox →
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>
