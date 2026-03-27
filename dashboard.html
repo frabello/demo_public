@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>iTracker – Escopo de Serviços: Controle de CAPEX e OPEX</title>
+<script>if(!sessionStorage.getItem('itracker_logged')){window.location.replace('index.html');}</script>
+<title>iTracker – Escopo de Serviços - CAPEX - OPEX
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
@@ -44,7 +45,7 @@
 
   
   /* ─── APP SHELL ─── */
-  #app-shell { display: none; }
+  #app-shell { display: block; }
 
   .sidebar {
     position: fixed;
@@ -3004,6 +3005,12 @@ document.getElementById('login-password').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
 });
 
+// ─── AUTH ───
+function doLogout() {
+  sessionStorage.removeItem('itracker_logged');
+  window.location.replace('index.html');
+}
+
 // ─── CRF POPUP ───
 function openCRF() {
   const today = new Date().toLocaleDateString('en-US', {month:'long', year:'numeric'});
@@ -3171,8 +3178,12 @@ function initCharts() {
         cutout: '65%',
       }
     });
-  }
 }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  initCharts();
+});
 </script>
 
 <!-- ═══════════════════════════════════════
